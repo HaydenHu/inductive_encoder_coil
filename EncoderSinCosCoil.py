@@ -166,14 +166,13 @@ def generate_coils(board, p):
                 group.AddItem(bezier)
                 
                 # 在段结束处添加过孔（层切换点）
-                if s < 2 * p["PERIODS"] - 1:  # 不是最后一段
-                    via = pcbnew.PCB_VIA(board)
-                    via.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(x1), pcbnew.FromMM(y1)))
-                    via.SetWidth(pcbnew.FromMM(p["VIA_SIZE"]))
-                    via.SetDrill(pcbnew.FromMM(p["VIA_DRILL"]))
-                    via.SetNet(net)
-                    board.Add(via)
-                    group.AddItem(via)
+                via = pcbnew.PCB_VIA(board)
+                via.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(x1), pcbnew.FromMM(y1)))
+                via.SetWidth(pcbnew.FromMM(p["VIA_SIZE"]))
+                via.SetDrill(pcbnew.FromMM(p["VIA_DRILL"]))
+                via.SetNet(net)
+                board.Add(via)
+                group.AddItem(via)
                 
                 # 切换层
                 layer = pcbnew.B_Cu if layer == pcbnew.F_Cu else pcbnew.F_Cu
