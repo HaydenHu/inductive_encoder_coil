@@ -24,27 +24,65 @@ def generate_coils(board, p):
 
     # 绘制一段
     def draw_seg(net, group, layer, st_rad, ed_rad, phase):
-        px, py = None, None
-        for i in range(p["SEG_POINTS"] + 1):
-            t = st_rad + (ed_rad - st_rad) * i / p["SEG_POINTS"]
-            w = t * p["PERIODS"] + phase
-            r = p["R_MID"] + p["AMPL"] * math.sin(w)
-            x = r * math.cos(t)
-            y = r * math.sin(t)
+        # 检查是否使用贝塞尔曲线
+        if p.get("USE_BEZIER", False):
+            # 使用贝塞尔曲线
+            # 计算4个控制点（三次贝塞尔曲线）
+            control_points = []
+            for i in range(4):
+                t = st_rad + (ed_rad - st_rad) * i / 3
+                w = t * p["PERIODS"] + phase
+                r = p["R_MID"] + p["AMPL"] * math.sin(w)
+                x = r * math.cos(t)
+                y = r * math.sin(t)
+                control_points.append((x, y))
+            
+            # 创建贝塞尔曲线
+            bezier = pcbnew.PCB_SHAPE(board)
+            bezier.SetShape(pcbnew.SHAPE_T_BEZIER)
+            
+            # 设置控制点
+            for i, (x, y) in enumerate(control_points):
+                if i == 0:
+                    bezier.SetStart(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
+                elif i == 1:
+                    bezier.SetBezierC1(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
+                elif i == 2:
+                    bezier.SetBezierC2(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
+                elif i == 3:
+                    bezier.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
+            
+            bezier.SetWidth(pcbnew.FromMM(p["TRACK_W"]))
+            bezier.SetLayer(layer)
+            bezier.SetNet(net)
+            board.Add(bezier)
+            group.AddItem(bezier)
+            
+            # 过孔在端点（层切换点）
+            px, py = control_points[-1]
+        else:
+            # 使用直线段（原有逻辑）
+            px, py = None, None
+            for i in range(p["SEG_POINTS"] + 1):
+                t = st_rad + (ed_rad - st_rad) * i / p["SEG_POINTS"]
+                w = t * p["PERIODS"] + phase
+                r = p["R_MID"] + p["AMPL"] * math.sin(w)
+                x = r * math.cos(t)
+                y = r * math.sin(t)
 
-            if i == 0:
+                if i == 0:
+                    px, py = x, y
+                    continue
+
+                tr = pcbnew.PCB_TRACK(board)
+                tr.SetStart(pcbnew.VECTOR2I(pcbnew.FromMM(px), pcbnew.FromMM(py)))
+                tr.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
+                tr.SetWidth(pcbnew.FromMM(p["TRACK_W"]))
+                tr.SetLayer(layer)
+                tr.SetNet(net)
+                board.Add(tr)
+                group.AddItem(tr)
                 px, py = x, y
-                continue
-
-            tr = pcbnew.PCB_TRACK(board)
-            tr.SetStart(pcbnew.VECTOR2I(pcbnew.FromMM(px), pcbnew.FromMM(py)))
-            tr.SetEnd(pcbnew.VECTOR2I(pcbnew.FromMM(x), pcbnew.FromMM(y)))
-            tr.SetWidth(pcbnew.FromMM(p["TRACK_W"]))
-            tr.SetLayer(layer)
-            tr.SetNet(net)
-            board.Add(tr)
-            group.AddItem(tr)
-            px, py = x, y
 
         # 过孔在端点（层切换点）
         via = pcbnew.PCB_VIA(board)

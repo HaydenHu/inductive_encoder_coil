@@ -18,6 +18,7 @@ UI_T = {
     "via_od": "过孔外径 (mm)" if is_zh() else "Via Outer (mm)",
     "via_drill": "过孔孔径 (mm)" if is_zh() else "Via Drill (mm)",
     "seg_smooth": "单段平滑点数" if is_zh() else "Smooth Segments",
+    "use_bezier": "使用贝塞尔曲线" if is_zh() else "Use Bezier Curve",
     "btn_gen": "生成线圈" if is_zh() else "Generate",
     "btn_cancel": "关闭" if is_zh() else "Close",
     "tip1": "SIN/COS 差分感应线圈" if is_zh() else "SIN/COS Differential Coil",
@@ -91,7 +92,8 @@ class CoilSettingsDialog(wx.Frame):  # <--- 改成 Frame 非模态
             "TRACK_W": 0.2,
             "VIA_SIZE": 0.6,
             "VIA_DRILL": 0.3,
-            "SEG_POINTS": 48
+            "SEG_POINTS": 48,
+            "USE_BEZIER": False
         }
 
         self.ctrl = {}
@@ -110,6 +112,13 @@ class CoilSettingsDialog(wx.Frame):  # <--- 改成 Frame 非模态
             tc = wx.TextCtrl(left_panel, value=str(self.defaults[key]))
             self.ctrl[key] = tc
             grid.Add(tc, 1, wx.EXPAND)
+        
+        # 添加贝塞尔曲线复选框
+        grid.Add(wx.StaticText(left_panel, label=UI_T["use_bezier"]), 0, wx.ALIGN_CENTER_VERTICAL)
+        cb = wx.CheckBox(left_panel)
+        cb.SetValue(self.defaults["USE_BEZIER"])
+        self.ctrl["USE_BEZIER"] = cb
+        grid.Add(cb, 0, wx.ALIGN_CENTER_VERTICAL)
 
         left_panel.SetSizer(grid)
         canvas = CoilCanvas(main_panel)
@@ -140,7 +149,8 @@ class CoilSettingsDialog(wx.Frame):  # <--- 改成 Frame 非模态
                 "TRACK_W": float(self.ctrl["TRACK_W"].GetValue()),
                 "VIA_SIZE": float(self.ctrl["VIA_SIZE"].GetValue()),
                 "VIA_DRILL": float(self.ctrl["VIA_DRILL"].GetValue()),
-                "SEG_POINTS": int(self.ctrl["SEG_POINTS"].GetValue())
+                "SEG_POINTS": int(self.ctrl["SEG_POINTS"].GetValue()),
+                "USE_BEZIER": self.ctrl["USE_BEZIER"].GetValue()
             }
         except:
             return None
